@@ -59,7 +59,8 @@ namespace JysanBot.Services
                 Name = userName,
                 Contact = phoneNum,
                 IIN = IIN,
-            });
+                DTPs = new DTP()
+            }); ;
         }
 
         public DTOs.DTP GetDtpInfo(int DTPId)

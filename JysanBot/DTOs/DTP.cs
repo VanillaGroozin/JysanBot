@@ -11,7 +11,8 @@ namespace JysanBot.DTOs
     {
         public int Id { get; internal set; }
         public User user { get; set; }
-        public byte[] Photos  { get; set; }
+        public PhotoSize[] Photos { get; set; }
         public Location Location { get; set; }
+
     }
 }

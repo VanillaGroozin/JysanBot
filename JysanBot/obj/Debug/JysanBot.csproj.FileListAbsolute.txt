@@ -26,3 +26,17 @@ C:\Users\user\Desktop\JysanBot\JysanBot\obj\Debug\JysanBot.csproj.CoreCompileInp
 C:\Users\user\Desktop\JysanBot\JysanBot\obj\Debug\JysanBot.csproj.CopyComplete
 C:\Users\user\Desktop\JysanBot\JysanBot\obj\Debug\JysanBot.exe
 C:\Users\user\Desktop\JysanBot\JysanBot\obj\Debug\JysanBot.pdb
+C:\Users\user\source\repos\JysanBot\JysanBot\bin\Debug\JysanBot.exe.config
+C:\Users\user\source\repos\JysanBot\JysanBot\bin\Debug\JysanBot.exe
+C:\Users\user\source\repos\JysanBot\JysanBot\bin\Debug\JysanBot.pdb
+C:\Users\user\source\repos\JysanBot\JysanBot\bin\Debug\LiteDB.dll
+C:\Users\user\source\repos\JysanBot\JysanBot\bin\Debug\Newtonsoft.Json.dll
+C:\Users\user\source\repos\JysanBot\JysanBot\bin\Debug\Telegram.Bot.dll
+C:\Users\user\source\repos\JysanBot\JysanBot\bin\Debug\LiteDB.xml
+C:\Users\user\source\repos\JysanBot\JysanBot\bin\Debug\Newtonsoft.Json.xml
+C:\Users\user\source\repos\JysanBot\JysanBot\bin\Debug\Telegram.Bot.xml
+C:\Users\user\source\repos\JysanBot\JysanBot\obj\Debug\JysanBot.csprojAssemblyReference.cache
+C:\Users\user\source\repos\JysanBot\JysanBot\obj\Debug\JysanBot.csproj.CoreCompileInputs.cache
+C:\Users\user\source\repos\JysanBot\JysanBot\obj\Debug\JysanBot.csproj.CopyComplete
+C:\Users\user\source\repos\JysanBot\JysanBot\obj\Debug\JysanBot.exe
+C:\Users\user\source\repos\JysanBot\JysanBot\obj\Debug\JysanBot.pdb

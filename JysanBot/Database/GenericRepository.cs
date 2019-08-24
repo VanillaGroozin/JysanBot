@@ -41,9 +41,5 @@ namespace JysanBot.Database
             _database = new LiteDatabase(EnvironmentVariables.DatabaseUrl);
         }
 
-        internal void Add(User user)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

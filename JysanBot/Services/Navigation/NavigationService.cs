@@ -28,6 +28,10 @@ namespace JysanBot.Services.Navigation
         {
             return Regex.IsMatch(s, @"^\d+$") && s.Length == 12;
         }
+        public bool IsStringPhonenumber(string s)
+        {
+            return Regex.IsMatch(s, @"^\d+$") && s.Length == 10 && s[0] == 7 && s[1] == 7;
+        }
         public InlineKeyboardMarkup CreateInlineKeyboard (string s)
         {
             //1\1.1\1.2|
@@ -225,6 +229,7 @@ namespace JysanBot.Services.Navigation
                                             else
                                             {
                                                 await _telegramBot.SendTextMessageAsync(chatId, "Неверное ФИО", replyMarkup: new ReplyKeyboardRemove());
+                                                CutMessagePath(splittedMessageBody);
                                             }                                      
                                             break;
 
@@ -237,11 +242,39 @@ namespace JysanBot.Services.Navigation
                                             {                                              
                                                 user.IIN = splittedMessageBody[3];
                                                 _insuranceService.UserUpdate(user);
-                                                CutMessagePath(splittedMessageBody, 0);
+                                                CutMessagePath(splittedMessageBody);
                                             }
                                             else
                                             {
                                                 await _telegramBot.SendTextMessageAsync(chatId, "Неверный ИИН", replyMarkup: new ReplyKeyboardRemove());
+                                                CutMessagePath(splittedMessageBody);
+                                            }
+                                            break;
+
+                                        case string st when st == "❌ Телефон" || st == "✔️ Телефон":
+                                            if (splittedMessageBody.Length == 3)
+                                            {
+                                                replyKeyboardMarkup = new ReplyKeyboardMarkup(KeyboardButton.WithRequestContact("Отправить телефон"));
+                                                replyKeyboardMarkup.ResizeKeyboard = true;
+                                                await _telegramBot.SendTextMessageAsync(chatId, "📲 Поделитесь номером телефона", 
+                                                    parseMode: ParseMode.Html,replyMarkup: replyKeyboardMarkup);
+                                            }
+                                            break;
+
+                                        case string st when st == "❌ Местоположение" || st == "✔️ Местоположение":
+                                            if (splittedMessageBody.Length == 3)
+                                            {
+                                                replyKeyboardMarkup = new ReplyKeyboardMarkup(KeyboardButton.WithRequestLocation("🌏 Отправить местоположение"));
+                                                replyKeyboardMarkup.ResizeKeyboard = true;
+                                                await _telegramBot.SendTextMessageAsync(chatId, "🌏 Поделитесь местоположением",
+                                                    parseMode: ParseMode.Html, replyMarkup: replyKeyboardMarkup);
+                                            }
+                                            break;
+                                        case string st when st == "❌ Фото" || st == "✔️ Фото":
+                                            if (splittedMessageBody.Length == 3)
+                                            {
+                                                await _telegramBot.SendTextMessageAsync(chatId, "Отправьте фото <b>ДТП</b>",
+                                                    parseMode: ParseMode.Html);
                                             }
                                             break;
                                     }
@@ -263,8 +296,8 @@ namespace JysanBot.Services.Navigation
                                     if (user.Contact == null) phoneNum += "❌ Телефон";
                                     else phoneNum += "✔️ Телефон";
                                     if (user.DTPs == null) user.DTPs = new DTOs.DTP();
-                                    if (user.DTPs.Location == null) location += "❌ Локация";
-                                    else location += "✔️ Фото";
+                                    if (user.DTPs.Location == null) location += "❌ Местоположение";
+                                    else location += "✔️ Местоположение";
                                     if (user.DTPs.Photos == null) photos += "❌ Фото";
                                     else photos += "✔️ Фото";
                                     fullKeyboardString = $"{FIO}\\{IIN}\\{phoneNum}|{location}\\{photos}|❓Как сделать фото?|";
@@ -278,7 +311,7 @@ namespace JysanBot.Services.Navigation
                                     }
 
 
-                                    await _telegramBot.SendTextMessageAsync(chatId, "Fill them all", replyMarkup: inlineKeyboard);
+                                    await _telegramBot.SendTextMessageAsync(chatId, "Заполните все поля чтобы продолжить", replyMarkup: inlineKeyboard);
                                 }
                                 break;
 

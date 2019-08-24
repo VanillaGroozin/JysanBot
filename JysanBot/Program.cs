@@ -60,13 +60,12 @@ namespace JysanBot
                 switch (messageBody as object)
                 {
                     case Message l when l.Location != null:
-                     
-                        DTP.Location = l.Location;
-                        user.DTPs = DTP;
-                        _insuranceService.UserUpdate(user);
 
-                        inlineKeyboard = _navigationService.CreateInlineKeyboard("Продолжить...|");
-                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "Location added", replyMarkup: inlineKeyboard);                        
+                        user.DTPs.Location = l.Location;
+                        _insuranceService.UserUpdate(user);
+                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "✔️", replyMarkup: new ReplyKeyboardRemove());
+                        inlineKeyboard = _navigationService.CreateInlineKeyboard("⏩ Продолжить...|");
+                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "Местоположение успешно отправлено", replyMarkup: inlineKeyboard);                        
 
                         break;
 
@@ -74,9 +73,17 @@ namespace JysanBot
 
                         user.Contact = c.Contact;
                         _insuranceService.UserUpdate(user);
+                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "✔️", replyMarkup: new ReplyKeyboardRemove());
+                        inlineKeyboard = _navigationService.CreateInlineKeyboard("⏩ Продолжить...|");
+                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "Номер телефона успешно добавлен", replyMarkup: inlineKeyboard);
+               
+                        break;
 
-                        inlineKeyboard = _navigationService.CreateInlineKeyboard("Продолжить...|");
-                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "Contact added", replyMarkup: inlineKeyboard);
+                    case Message p when p.Photo != null:
+                        user.DTPs.Photos = p.Photo;
+                        _insuranceService.UserUpdate(user);
+                        inlineKeyboard = _navigationService.CreateInlineKeyboard("⏩ Продолжить...|");
+                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "Фото успешно добавлено", replyMarkup: inlineKeyboard);
                         break;
 
                     case Message s when s.Text == "/start":
@@ -97,14 +104,6 @@ namespace JysanBot
    
                         
                         EnvironmentVariables.ShowLastPrintedMessage = false;
-                        break;
-
-                    case Message s when _navigationService.IsStringIIN(s.Text):                  
-                        await _navigationService.NavigateTo(s.Text, s.Chat.Id, s.From.Id, _telegramBot);
-                        break;
-
-                    case Message s when s.Text.Split(' ').Length == 3:
-                        await _navigationService.NavigateTo(s.Text, s.Chat.Id, s.From.Id, _telegramBot);
                         break;
 
 
@@ -438,11 +437,18 @@ namespace JysanBot
 
 
                     default:
-                        inlineKeyboard = _navigationService.CreateInlineKeyboard("Назад...\\Вернуться в меню|");
+                        try
+                        {
+                            await _navigationService.NavigateTo(messageBody.Text, messageBody.Chat.Id, messageBody.From.Id, _telegramBot);
+                        }
+                        catch
+                        {
+                            inlineKeyboard = _navigationService.CreateInlineKeyboard("Назад...\\Вернуться в меню|");
                             await _telegramBot.SendTextMessageAsync(
                                 chatId: messageEventArgs.Message.Chat,
                                 text: "К сожалению, мы не нашли нужное вам значение в базе. " +
                                 "Попробуйте написать еще раз иначе.", replyMarkup: inlineKeyboard);
+                        }
                         break;                
                 }
             }
