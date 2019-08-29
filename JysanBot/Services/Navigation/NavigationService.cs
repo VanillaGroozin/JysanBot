@@ -13,6 +13,12 @@ using System.Collections.Generic;
 using Telegram.Bot.Types;
 using System.Configuration;
 using System.Data.SqlClient;
+using Newtonsoft.Json;
+using System.Net;
+using System.IO;
+using System.Linq;
+using System.Device.Location;
+using System.Globalization;
 
 namespace JysanBot.Services.Navigation
 {
@@ -25,7 +31,29 @@ namespace JysanBot.Services.Navigation
         public static string messagePath = string.Empty;
         InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(new[] { InlineKeyboardButton.WithCallbackData(""), });
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        private Location GetLocationByAdress (string adress)
+        {
+            string jsonOut = string.Empty;
+            string url = $@"https://eu1.locationiq.com/v1/search.php?key={EnvironmentVariables.LocationIQToken}&q={adress}&format=json";
 
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.AutomaticDecompression = DecompressionMethods.GZip;
+
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            using (Stream stream = response.GetResponseStream())
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                jsonOut = reader.ReadToEnd();
+            }
+            List<Location> locations = JsonConvert.DeserializeObject<List<Location>>(jsonOut);
+            return locations[0];
+        }
+        private float GetDistanceBettweenLocations (float lat1, float lon1, float lat2, float lon2)
+        {
+            GeoCoordinate c1 = new GeoCoordinate(lat1, lon1);
+            GeoCoordinate c2 = new GeoCoordinate(lat2, lon2);
+            return (float)(c1.GetDistanceTo(c2) / 1000);
+        }
         public bool IsStringIIN(string s)
         {
             return Regex.IsMatch(s, @"^\d+$") && s.Length == 12;
@@ -359,9 +387,71 @@ namespace JysanBot.Services.Navigation
 
 
                 case "Связаться с оператором":
-                    responseMessage = "Вошел в \"Связаться с оператором\"";
+                    if (splittedMessageBody.Length > 1)
+                    {
+                        switch (splittedMessageBody[1])
+                        {
+                            case "Ближайшее отделение":
+                                var user = _insuranceService.GetUserInfo(userId);
+                                if (user.DTPs.IsLocationNeeded())
+                                {
+                                    replyKeyboardMarkup = new ReplyKeyboardMarkup(KeyboardButton.WithRequestLocation("🌏 Отправить местоположение"));
+                                    replyKeyboardMarkup.ResizeKeyboard = true;
+                                    await _telegramBot.SendTextMessageAsync(chatId, "🌏 Поделитесь местоположением",
+                                        parseMode: ParseMode.Html, replyMarkup: replyKeyboardMarkup);
+                                }
+                                else
+                                {
+                                    List<Tuple<Location, string>> allDepartamentsAndPhones = new List<Tuple<Location, string>>();
+                                    string connetionString = System.Configuration.ConfigurationManager.ConnectionStrings["fstpString"].ConnectionString;
+                                    try
+                                    {
+                                        using (SqlConnection cnn = new SqlConnection(connetionString))
+                                        {
+                                            using (SqlCommand command = new SqlCommand("exec [Fstp]..Report_ogpo_dept", cnn))
+                                            {
+                                                cnn.Open();
+                                                using (SqlDataReader dataReader = command.ExecuteReader())
+                                                {
+                                                    while (dataReader.Read())
+                                                    {
+                                                        try
+                                                        {
+                                                            Location loc = GetLocationByAdress(dataReader.GetValue(4).ToString());
+                                                            String phon = dataReader.GetValue(5).ToString();
+                                                            allDepartamentsAndPhones.Add(new Tuple<Location, string>(loc, phon));
+                                                        }
+                                                        catch { }
+                                                        
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine("Can not open connection ! ");
+                                    }
 
-                    await _telegramBot.SendTextMessageAsync(chatId, responseMessage);
+                                    Tuple<Location, string> sortedDepts = allDepartamentsAndPhones.OrderBy(
+                                        x => GetDistanceBettweenLocations(
+                                        user.DTPs.Location.Latitude,
+                                        user.DTPs.Location.Longitude,
+                                        float.Parse(x.Item1.lat, CultureInfo.InvariantCulture),
+                                        float.Parse(x.Item1.lon, CultureInfo.InvariantCulture))).First();
+                                    await _telegramBot.SendTextMessageAsync(chatId, $"🌏 Ближайшее подразеделение\nНомер: {sortedDepts.Item2}", parseMode: ParseMode.Html);
+                                    await _telegramBot.SendLocationAsync(chatId, float.Parse(sortedDepts.Item1.lat, CultureInfo.InvariantCulture), 
+                                        float.Parse(sortedDepts.Item1.lon, CultureInfo.InvariantCulture));
+                                }
+
+                                
+                                break;
+                        }
+                    } else {
+                        responseMessage = "Вошел в \"Связаться с оператором\"";
+                        inlineKeyboard = CreateInlineKeyboard("Близжайшее отделение|");
+                        await _telegramBot.SendTextMessageAsync(chatId, responseMessage, replyMarkup: inlineKeyboard);
+                    }
                     break;
 
 

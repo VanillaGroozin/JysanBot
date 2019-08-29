@@ -82,24 +82,11 @@ static void Main(string[] args)
                     case Message l when l.Location != null:
 
                         user.DTPs.Location = l.Location;
+                        user.DTPs.LocationGetTime = DateTime.Now;
                         _insuranceService.UserUpdate(user);
-
-                        var address = "ул.Тимирязева,95/226";
-
-                        var locationService = new GoogleLocationService();
-                        var point = locationService.GetLatLongFromAddress(address);
-                        
-                        float latitude =  (float)point.Latitude;
-                        float longitude = (float)point.Longitude;
-
-                        Location someTestShit = new Location();
-                        someTestShit.Latitude = latitude;
-                        someTestShit.Longitude = longitude;
-                        var inputAdressName = locationService.GetRegionFromLatLong(l.Location.Latitude, l.Location.Longitude);
-                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, $"✔️{inputAdressName}", replyMarkup: new ReplyKeyboardRemove());
                         inlineKeyboard = _navigationService.CreateInlineKeyboard("⏩ Продолжить...|");
                         await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "Местоположение успешно отправлено", replyMarkup: inlineKeyboard);
-                        await _telegramBot.SendLocationAsync(messageEventArgs.Message.Chat.Id, someTestShit.Latitude, someTestShit.Longitude = longitude);
+
                         break;
 
                     case Message c when c.Contact != null:
@@ -455,7 +442,7 @@ static void Main(string[] args)
                     #endregion
 
 
-#region InsurerRegistration
+                    #region InsurerRegistration
 
                     case string s when s == "Да, оформляем за ":
                         await _telegramBot.SendChatActionAsync(messageEventArgs.Message.Chat.Id, ChatAction.Typing);
