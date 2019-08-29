@@ -11,6 +11,15 @@ using Telegram.Bot.Types.InlineQueryResults;
 using JysanBot.Services.Navigation;
 using JysanBot.DTOs;
 using Telegram.Bot.Types;
+using System.Linq;
+using System.Drawing;
+using System.IO;
+using System.Drawing.Imaging;
+using System.Net;
+using System.Data;
+using System.Web.Configuration;
+using System.Data.SqlClient;
+using GoogleMaps.LocationServices;
 
 namespace JysanBot
 {
@@ -21,7 +30,10 @@ namespace JysanBot
         private static NavigationService _navigationService;
         private static DTOs.User _currentUser;
 
-        static void Main(string[] args)
+
+
+
+static void Main(string[] args)
         {
             _telegramBot.OnMessage += BotOnMessageReceived;
             _telegramBot.OnMessageEdited += BotOnMessageReceived;
@@ -52,8 +64,16 @@ namespace JysanBot
             Console.WriteLine($"Received inline query from: {messageEventArgs.Message.Location}, {messageEventArgs.Message.Contact}");
             ReplyKeyboardMarkup ReplyKeyboard = new ReplyKeyboardMarkup { };
             InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup (new[] { InlineKeyboardButton.WithCallbackData(""),});
-            var user = _insuranceService.GetUserInfo(messageEventArgs.Message.From.Id);
-            var DTP = _insuranceService.GetDtpInfo(messageEventArgs.Message.From.Id);
+            var user = new DTOs.User();
+            var DTP = new DTP();
+            try
+            {
+                user = _insuranceService.GetUserInfo(messageEventArgs.Message.From.Id);
+                DTP = _insuranceService.GetDtpInfo(messageEventArgs.Message.From.Id);
+            }catch
+            {
+
+            }
 
             if (messageBody != null)
             {
@@ -63,10 +83,23 @@ namespace JysanBot
 
                         user.DTPs.Location = l.Location;
                         _insuranceService.UserUpdate(user);
-                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "✔️", replyMarkup: new ReplyKeyboardRemove());
-                        inlineKeyboard = _navigationService.CreateInlineKeyboard("⏩ Продолжить...|");
-                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "Местоположение успешно отправлено", replyMarkup: inlineKeyboard);                        
 
+                        var address = "ул.Тимирязева,95/226";
+
+                        var locationService = new GoogleLocationService();
+                        var point = locationService.GetLatLongFromAddress(address);
+                        
+                        float latitude =  (float)point.Latitude;
+                        float longitude = (float)point.Longitude;
+
+                        Location someTestShit = new Location();
+                        someTestShit.Latitude = latitude;
+                        someTestShit.Longitude = longitude;
+                        var inputAdressName = locationService.GetRegionFromLatLong(l.Location.Latitude, l.Location.Longitude);
+                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, $"✔️{inputAdressName}", replyMarkup: new ReplyKeyboardRemove());
+                        inlineKeyboard = _navigationService.CreateInlineKeyboard("⏩ Продолжить...|");
+                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "Местоположение успешно отправлено", replyMarkup: inlineKeyboard);
+                        await _telegramBot.SendLocationAsync(messageEventArgs.Message.Chat.Id, someTestShit.Latitude, someTestShit.Longitude = longitude);
                         break;
 
                     case Message c when c.Contact != null:
@@ -80,10 +113,40 @@ namespace JysanBot
                         break;
 
                     case Message p when p.Photo != null:
-                        user.DTPs.Photos = p.Photo;
-                        _insuranceService.UserUpdate(user);
+
+                        //var teleFile = _telegramBot.GetFileAsync(p.Photo[p.Photo.Count() - 1].FileId);
+                        //var downloadUrl = $@"https://api.telegram.org/file/bot{EnvironmentVariables.BotToken}/" + teleFile.Result.FilePath;
+                        //using (WebClient client = new WebClient())
+                        //{
+                        //    client.DownloadFile(new Uri(downloadUrl), @"Files\image.png");
+                        //}
+                        
+                        ////using (var fileStream = new FileStream(@"Files\image.png", FileMode.Open, FileAccess.Read, FileShare.Read))
+                        ////{
+                        ////    await _telegramBot.SendPhotoAsync(
+                        ////        p.Chat.Id,
+                        ////        fileStream,
+                        ////        "Nice Picture");                           
+                        ////}
+
+                        //var img = Image.FromFile(@"Files\image.png");
+                        //if (user.DTPs.Photos == null) user.DTPs.Photos = new System.Collections.Generic.List<Image>();
+                        //user.DTPs.Photos.Add(img);
+                        //_insuranceService.UserUpdate(user);
+                        //foreach (var photo in user.DTPs.Photos)
+                        //{
+                        //    using (var fileStream = new FileStream(@"Files\image.png", FileMode.Open, FileAccess.Read, FileShare.Read))
+                        //    {
+                        //        //photo.Save(fileStream, ImageFormat.Png);
+                        //        await _telegramBot.SendPhotoAsync(
+                        //            p.Chat.Id,
+                        //            fileStream,
+                        //            "Nice Picture");
+                        //    }                        
+                        //}
+
                         inlineKeyboard = _navigationService.CreateInlineKeyboard("⏩ Продолжить...|");
-                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "Фото успешно добавлено", replyMarkup: inlineKeyboard);
+                        await _telegramBot.SendTextMessageAsync(messageEventArgs.Message.Chat.Id, "Фото успешно добавлено" ,replyMarkup: inlineKeyboard);
                         break;
 
                     case Message s when s.Text == "/start":
@@ -437,18 +500,13 @@ namespace JysanBot
 
 
                     default:
-                        try
-                        {
-                            await _navigationService.NavigateTo(messageBody.Text, messageBody.Chat.Id, messageBody.From.Id, _telegramBot);
-                        }
-                        catch
-                        {
-                            inlineKeyboard = _navigationService.CreateInlineKeyboard("Назад...\\Вернуться в меню|");
-                            await _telegramBot.SendTextMessageAsync(
-                                chatId: messageEventArgs.Message.Chat,
-                                text: "К сожалению, мы не нашли нужное вам значение в базе. " +
-                                "Попробуйте написать еще раз иначе.", replyMarkup: inlineKeyboard);
-                        }
+
+                        inlineKeyboard = _navigationService.CreateInlineKeyboard("Назад...\\Вернуться в меню|");
+                        await _telegramBot.SendTextMessageAsync(
+                            chatId: messageEventArgs.Message.Chat,
+                            text: "К сожалению, мы не нашли нужное вам значение в базе. " +
+                            "Попробуйте написать еще раз иначе.", replyMarkup: inlineKeyboard);
+                        
                         break;                
                 }
             }

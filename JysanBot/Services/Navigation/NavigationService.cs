@@ -11,6 +11,8 @@ using Telegram.Bot.Types.InlineQueryResults;
 using JysanBot.Services.Navigation;
 using System.Collections.Generic;
 using Telegram.Bot.Types;
+using System.Configuration;
+using System.Data.SqlClient;
 
 namespace JysanBot.Services.Navigation
 {
@@ -90,16 +92,15 @@ namespace JysanBot.Services.Navigation
             var responseMessage = string.Empty;
             var splittedMessageBody = messagePath.Split('\\');
 
-            if (messageBody != "\\Назад...")
-            {
+            if (messageBody == "\\Назад..." || messageBody == "\\⏩ Продолжить...") CutMessagePath(splittedMessageBody, 0);
+            else 
+            {              
                 if (splittedMessageBody[splittedMessageBody.Length - 1] != messageBody) messagePath += messageBody;
             }
-            else
-            {
-                CutMessagePath(splittedMessageBody, 0);
-            }
+            
 
             splittedMessageBody = messagePath.Split('\\');
+            if (splittedMessageBody.Length > 2 && (splittedMessageBody[splittedMessageBody.Length - 1] == splittedMessageBody[splittedMessageBody.Length - 2])) CutMessagePath(splittedMessageBody);
 
             switch (splittedMessageBody[0])
                 {
@@ -279,8 +280,7 @@ namespace JysanBot.Services.Navigation
                                             break;
                                         case string st when st == "❓ Как сделать фото?":
                                             inlineKeyboard = CreateInlineKeyboard("Назад...|");
-
-                                            await _telegramBot.SendTextMessageAsync(chatId, "<b>Какие снимки делаются при ДТП?</b>\n" +
+                                            responseMessage = "<b>Какие снимки делаются при ДТП?</b>\n" +
                                                 "<i>Фотоснимки, необходимые для документирования дорожно-транспортного происшествия:</i>\n" +
                                                 "❕ Фотография, на которой запечатлено место аварии. На ней также должны быть видны машины, ставшие участниками ДТП;\n" +
                                                 "❕ Снимки государственных номеров ТС. Если есть такая возможность – примените макросъемку;\n" +
@@ -297,7 +297,8 @@ namespace JysanBot.Services.Navigation
                                                 "А все это происходит по той причине, что по снимкам совершенно ясно, что это именно они виновны в данном происшествии. Позвольте дать вам несколько полезных советов:</b>" +
                                                 "❕ Место, в котором произошло столкновение машин, снимайте крупным планом;\n" +
                                                 "❕ Обязательно делайте фото таким образом, чтобы в объектив попадал и государственный номер машины. " +
-                                                "Так специалисты точно поймут, какой именно автомобиль сфотографирован.\n",
+                                                "Так специалисты точно поймут, какой именно автомобиль сфотографирован.\n";
+                                            await _telegramBot.SendTextMessageAsync(chatId, responseMessage,
                                                 parseMode: ParseMode.Html, replyMarkup: inlineKeyboard); ;
                                             break;
 
