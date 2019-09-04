@@ -33,6 +33,13 @@ namespace JysanBot.Services.Navigation
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         private Location GetLocationByAdress (string adress)
         {
+            var splittedAdress = adress.Split(',');
+            _ = splittedAdress.Length > 3 ? adress =
+                splittedAdress[splittedAdress.Length - 4] +
+                splittedAdress[splittedAdress.Length - 3] +
+                splittedAdress[splittedAdress.Length - 2] + 
+                splittedAdress[splittedAdress.Length - 1] : 
+                adress = adress;
             string jsonOut = string.Empty;
             string url = $@"https://eu1.locationiq.com/v1/search.php?key={EnvironmentVariables.LocationIQToken}&q={adress}&format=json";
 
@@ -111,16 +118,16 @@ namespace JysanBot.Services.Navigation
         {
             await _telegramBot.SendChatActionAsync(chatId, ChatAction.Typing);
 
-            if (messageBody != "SOS ДТП" ^
-                messageBody != "Купить" ^
-                messageBody != "Связаться с оператором")
+            if (messageBody != "🆘 SOS ДТП" ^
+                messageBody != "📜 Купить" ^
+                messageBody != "☎️ Связаться с оператором")
                 messageBody = '\\' + messageBody;
             else messagePath = string.Empty;
 
             var responseMessage = string.Empty;
             var splittedMessageBody = messagePath.Split('\\');
 
-            if (messageBody == "\\Назад..." || messageBody == "\\⏩ Продолжить...") CutMessagePath(splittedMessageBody, 0);
+            if (messageBody == "\\🔙 Назад..." || messageBody == "\\⏩ Продолжить...") CutMessagePath(splittedMessageBody, 0);
             else 
             {              
                 if (splittedMessageBody[splittedMessageBody.Length - 1] != messageBody) messagePath += messageBody;
@@ -132,7 +139,7 @@ namespace JysanBot.Services.Navigation
 
             switch (splittedMessageBody[0])
                 {
-                case "Купить":
+                case "📜 Купить":
                     {
                         if (splittedMessageBody.Length > 1)
                         {
@@ -155,7 +162,7 @@ namespace JysanBot.Services.Navigation
                             }
 
                         }
-                        inlineKeyboard = CreateInlineKeyboard("Назад...|");
+                        inlineKeyboard = CreateInlineKeyboard("🔙 Назад...|");
 
                         await _telegramBot.SendTextMessageAsync(
                             chatId,
@@ -166,48 +173,49 @@ namespace JysanBot.Services.Navigation
                     }
 
 
-                case "SOS ДТП":
+                case "🆘 SOS ДТП":
 
                     if (splittedMessageBody.Length > 1)
                     {
                         switch (splittedMessageBody[1])
                         {
-                            case "Контактные номера телефонов":
+                            case "☎️ Контактные номера телефонов":
                                 {
                                     responseMessage = "Вызовите сотрудников административной полиции – 102\n" +
-                                    "1) В случае необходимости:\n" +
-                                    "\t- 101 – пожарная служба; \n" +
-                                    "\t- 103 – скорая медицинская помощь; \n" +
-                                    "\t- 104 – газовая служба; \n" +
-                                    "\t- 112 – служба спасения.\n" +
-                                    "2) Сообщите другим участникам ДТП номер Вашего полиса ОГПО ВТС и телефон Цесна Гарант\n" +
-                                    "\t- Контакты для консультации: \n" +
-                                    "\tс 8:00 до 22:00 – call центр: 3264 с мобильных бесплатно, +7(727) 357 25 25\n" +
-                                    "\tс 22:00 до 8:00 – аварийный комиссар +7 701 529 80 48\n";
+                                    "<b>1) В случае необходимости:</b>\n" +
+                                    "\t- 101 – пожарная служба; 🚒\n" +
+                                    "\t- 103 – скорая медицинская помощь; 🚑\n" +
+                                    "\t- 104 – газовая служба; 👷\n" +
+                                    "\t- 112 – служба спасения. ⛑️\n" +
+                                    "<b>2) Сообщите другим участникам ДТП номер Вашего полиса ОГПО ВТС и телефон Jysan Garant</b>\n" +
+                                    "\t- <b><Контакты для консультации:</b> \n" +
+                                    "\tс <b>8:00 до 22:00</b> – call центр: 3264 с мобильных бесплатно, +7 (727) 357 25 25\n" +
+                                    "\tс <b>22:00 до 8:00</b> – аварийный комиссар +7 701 529 80 48 🚔\n";
 
-                                    inlineKeyboard = CreateInlineKeyboard("Назад...|");
+                                    inlineKeyboard = CreateInlineKeyboard("🔙 Назад...|");
                                     await _telegramBot.SendTextMessageAsync(
                                         chatId,
                                         responseMessage,
-                                        replyMarkup: inlineKeyboard);
+                                        replyMarkup: inlineKeyboard,
+                                        parseMode: ParseMode.Html);
                                     break;
                                 }
-                            case "Список документов":
+                            case "🔖 Список документов":
                                 {
-                                    inlineKeyboard = CreateInlineKeyboard("Назад...|");
+                                    inlineKeyboard = CreateInlineKeyboard("🔙 Назад...|");
                                     await _telegramBot.SendTextMessageAsync(
                                         chatId,
                                         "Потом доделаю",
                                         replyMarkup: inlineKeyboard);
                                     break;
                                 }
-                            case "Действия клиента":
+                            case "❓ Действия клиента":
                                 {
                                     if (splittedMessageBody.Length > 2)
                                     {
                                         switch (splittedMessageBody[2])
                                         {
-                                            case "Виновник":
+                                            case "❗ Виновник":
                                                 {
                                                     responseMessage = "1) заявление о страховом случае;\n" +
                                                         "2) страховой полис(его дубликат) виновника ДТП;\n" +
@@ -216,7 +224,7 @@ namespace JysanBot.Services.Navigation
                                                         "5) копия водительского удостоверения(временных прав);заключение медицинского освидетельствования.\n";
                                                     break;
                                                 }
-                                            case "Потерпевший":
+                                            case "❕ Потерпевший":
                                                 {
                                                     responseMessage = "1) (Прямое урегулирование)\n" +
                                                         "2) К вышеперечисленному списку документов + полис виновника ДТП\n" +
@@ -229,7 +237,7 @@ namespace JysanBot.Services.Navigation
                                         await _telegramBot.SendTextMessageAsync(chatId, responseMessage,replyMarkup: inlineKeyboard);
                                         break;
                                     }
-                                    inlineKeyboard = CreateInlineKeyboard("Виновник|Потерпевший|Назад...|");
+                                    inlineKeyboard = CreateInlineKeyboard("❗ Виновник|❕ Потерпевший|🔙 Назад...|");
 
                                     await _telegramBot.SendTextMessageAsync(
                                         chatId,
@@ -238,7 +246,7 @@ namespace JysanBot.Services.Navigation
                                     break;
 
                                 }
-                            case string s when s ==  "Заявить о ДТП":
+                            case string s when s == "🛂 Заявить о ДТП":
                                 var user = _insuranceService.GetUserInfo(userId);
                                 if (splittedMessageBody.Length > 2)
                                 {
@@ -247,7 +255,7 @@ namespace JysanBot.Services.Navigation
                                         case string st when st == "❌ ФИО" || st == "✔️ ФИО":
                                             if (splittedMessageBody.Length == 3)
                                             {
-                                                await _telegramBot.SendTextMessageAsync(chatId, "Введите ФИО", replyMarkup: new ReplyKeyboardRemove());
+                                                await _telegramBot.SendTextMessageAsync(chatId, "⌨️ Введите ФИО", replyMarkup: new ReplyKeyboardRemove());
                                             }
                                             else if (splittedMessageBody[3].Split(' ').Length == 3)
                                             {
@@ -265,7 +273,7 @@ namespace JysanBot.Services.Navigation
                                         case string st when st == "❌ ИИН" || st == "✔️ ИИН" || IsStringIIN(st):
                                             if (splittedMessageBody.Length==3)
                                             {
-                                                await _telegramBot.SendTextMessageAsync(chatId, "Введите ИИН", replyMarkup: new ReplyKeyboardRemove());
+                                                await _telegramBot.SendTextMessageAsync(chatId, "⌨️ Введите ИИН", replyMarkup: new ReplyKeyboardRemove(), parseMode: ParseMode.Html);
                                             }
                                             else if (IsStringIIN(splittedMessageBody[3]))
                                             {                                              
@@ -307,7 +315,7 @@ namespace JysanBot.Services.Navigation
                                             }
                                             break;
                                         case string st when st == "❓ Как сделать фото?":
-                                            inlineKeyboard = CreateInlineKeyboard("Назад...|");
+                                            inlineKeyboard = CreateInlineKeyboard("🔙 Назад...|");
                                             responseMessage = "<b>Какие снимки делаются при ДТП?</b>\n" +
                                                 "<i>Фотоснимки, необходимые для документирования дорожно-транспортного происшествия:</i>\n" +
                                                 "❕ Фотография, на которой запечатлено место аварии. На ней также должны быть видны машины, ставшие участниками ДТП;\n" +
@@ -360,15 +368,15 @@ namespace JysanBot.Services.Navigation
                                     }
                                     else
                                     {
-                                        inlineKeyboard = CreateInlineKeyboard(fullKeyboardString + "Заявить о ДТП|");
+                                        inlineKeyboard = CreateInlineKeyboard(fullKeyboardString + "🛂 Заявить о ДТП|");
                                     }
 
 
-                                    await _telegramBot.SendTextMessageAsync(chatId, "Заполните все поля чтобы продолжить", replyMarkup: inlineKeyboard);
+                                    await _telegramBot.SendTextMessageAsync(chatId, "❕ Заполните все поля чтобы продолжить", replyMarkup: inlineKeyboard);
                                 }
                                 break;
 
-                            case "Вернуться в меню":
+                            case "📖 Вернуться в меню":
                                 messagePath = string.Empty;
                                 break;
                         }
@@ -376,7 +384,7 @@ namespace JysanBot.Services.Navigation
                     }
                     else
                     {
-                        inlineKeyboard = CreateInlineKeyboard("Контактные номера телефонов|Список документов|Заявить о ДТП|Действия клиента|Назад...|");
+                        inlineKeyboard = CreateInlineKeyboard("☎️ Контактные номера телефонов|🔖 Список документов|🛂 Заявить о ДТП|❓ Действия клиента|🔙 Назад...|");
                     
                         await _telegramBot.SendTextMessageAsync(
                                 chatId,
@@ -386,12 +394,12 @@ namespace JysanBot.Services.Navigation
                     }
 
 
-                case "Связаться с оператором":
+                case "☎️ Связаться с оператором":
                     if (splittedMessageBody.Length > 1)
                     {
                         switch (splittedMessageBody[1])
                         {
-                            case "Ближайшее отделение":
+                            case "🌎 Ближайшее отделение":
                                 var user = _insuranceService.GetUserInfo(userId);
                                 if (user.DTPs.IsLocationNeeded())
                                 {
@@ -402,7 +410,7 @@ namespace JysanBot.Services.Navigation
                                 }
                                 else
                                 {
-                                    List<Tuple<Location, string>> allDepartamentsAndPhones = new List<Tuple<Location, string>>();
+                                    List<Tuple<Location, string, float>> allDepartamentsAndPhones = new List<Tuple<Location, string, float>>();
                                     string connetionString = System.Configuration.ConfigurationManager.ConnectionStrings["fstpString"].ConnectionString;
                                     try
                                     {
@@ -419,10 +427,13 @@ namespace JysanBot.Services.Navigation
                                                         {
                                                             Location loc = GetLocationByAdress(dataReader.GetValue(4).ToString());
                                                             String phon = dataReader.GetValue(5).ToString();
-                                                            allDepartamentsAndPhones.Add(new Tuple<Location, string>(loc, phon));
+                                                            float dist = GetDistanceBettweenLocations(user.DTPs.Location.Latitude, 
+                                                                user.DTPs.Location.Longitude, 
+                                                                float.Parse(loc.lat, CultureInfo.InvariantCulture),
+                                                                float.Parse(loc.lon, CultureInfo.InvariantCulture));
+                                                            allDepartamentsAndPhones.Add(new Tuple<Location, string, float>(loc, phon, dist));
                                                         }
-                                                        catch { }
-                                                        
+                                                        catch { }                                                      
                                                     }
                                                 }
                                             }
@@ -430,34 +441,35 @@ namespace JysanBot.Services.Navigation
                                     }
                                     catch (Exception ex)
                                     {
-                                        Console.WriteLine("Can not open connection ! ");
+                                        Console.WriteLine(ex.Message);
                                     }
 
-                                    Tuple<Location, string> sortedDepts = allDepartamentsAndPhones.OrderBy(
-                                        x => GetDistanceBettweenLocations(
-                                        user.DTPs.Location.Latitude,
-                                        user.DTPs.Location.Longitude,
-                                        float.Parse(x.Item1.lat, CultureInfo.InvariantCulture),
-                                        float.Parse(x.Item1.lon, CultureInfo.InvariantCulture))).First();
-                                    await _telegramBot.SendTextMessageAsync(chatId, $"🌏 Ближайшее подразеделение\nНомер: {sortedDepts.Item2}", parseMode: ParseMode.Html);
+                                    Tuple<Location, string, float> sortedDepts = allDepartamentsAndPhones.OrderBy(x => x.Item3).First();
+                                    await _telegramBot.SendTextMessageAsync(chatId,
+                                        $"🌏 Ближайшее подразеделение\n" +
+                                        $"🚶 Расстояние: {sortedDepts.Item3.ToString("0.##")}км",
+                                        parseMode: ParseMode.Html);
                                     await _telegramBot.SendLocationAsync(chatId, float.Parse(sortedDepts.Item1.lat, CultureInfo.InvariantCulture), 
                                         float.Parse(sortedDepts.Item1.lon, CultureInfo.InvariantCulture));
+                                    await _telegramBot.SendTextMessageAsync(chatId,
+                                        $"☎️ Номер: {sortedDepts.Item2}\n",                                    
+                                        parseMode: ParseMode.Html, replyMarkup: CreateInlineKeyboard("🔙 Назад...|"));
                                 }
 
                                 
                                 break;
                         }
                     } else {
-                        responseMessage = "Вошел в \"Связаться с оператором\"";
-                        inlineKeyboard = CreateInlineKeyboard("Близжайшее отделение|");
+                        responseMessage = "Вошел в \"☎️ Связаться с оператором\"";
+                        inlineKeyboard = CreateInlineKeyboard("🌎 Ближайшее отделение|");
                         await _telegramBot.SendTextMessageAsync(chatId, responseMessage, replyMarkup: inlineKeyboard);
                     }
                     break;
 
 
                 default:
-                    inlineKeyboard = CreateInlineKeyboard("Купить\\SOS ДТП|Связаться с оператором|");
-                    responseMessage = "<b>Главное меню</b>..";
+                    inlineKeyboard = CreateInlineKeyboard("📜 Купить\\🆘 SOS ДТП|☎️ Связаться с оператором|");
+                    responseMessage = "<b>📖 Главное меню</b>..";
                     await _telegramBot.SendTextMessageAsync(chatId, responseMessage, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
                     break;
             }

@@ -488,7 +488,7 @@ static void Main(string[] args)
 
                     default:
 
-                        inlineKeyboard = _navigationService.CreateInlineKeyboard("Назад...\\Вернуться в меню|");
+                        inlineKeyboard = _navigationService.CreateInlineKeyboard("🔙 Назад...\\📖 Вернуться в меню|");
                         await _telegramBot.SendTextMessageAsync(
                             chatId: messageEventArgs.Message.Chat,
                             text: "К сожалению, мы не нашли нужное вам значение в базе. " +
