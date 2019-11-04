@@ -38,7 +38,6 @@ static void Main(string[] args)
             _telegramBot.OnMessage += BotOnMessageReceived;
             _telegramBot.OnMessageEdited += BotOnMessageReceived;
             _telegramBot.OnCallbackQuery += BotOnCallbackQueryReceived;
-            _telegramBot.OnInlineQuery += BotOnInlineQueryReceived;
             _telegramBot.OnInlineResultChosen += BotOnChosenInlineResultReceived;
             _telegramBot.OnReceiveError += BotOnReceiveError;
 
@@ -145,12 +144,16 @@ static void Main(string[] args)
                             chatId: messageEventArgs.Message.Chat,
                             text: responseMessage);
 
-                        inlineKeyboard = _navigationService.CreateInlineKeyboard("Купить\\SOS ДТП|Связаться с оператором\\Еще что-то...|");
+                        inlineKeyboard = _navigationService.CreateInlineKeyboard("💲 Купить\\🆘 SOS ДТП|🌍 Подразделения|📝 Мои полисы|");
 
                         await _telegramBot.SendTextMessageAsync(
                         messageEventArgs.Message.Chat.Id,
-                        "Choose",
-                        replyMarkup: inlineKeyboard);
+                        $"<b>'🕮 Главное меню'</b> \n\n" +
+                        $"- для того, чтобы приобрести полис, нажмите на кнопку - <b>'💲 Купить'</b>\n\n" +
+                        "- для того, чтобы заявить о ДТП и получить необходимую информацию, нажмите на кнопку - <b>'🆘 SOS ДТП'</b>\n\n" +
+                        "- для того, чтобы получить необходимые контакты, нажмите на кнопку - <b>'🌍 Подразделения'</b>\n\n" +
+                        "- для того, чтобы посмотреть свои полисы, нажмите на кнопку - <b>'📝 Мои полисы'</b>\n\n",
+                        replyMarkup: inlineKeyboard, parseMode: ParseMode.Html);
    
                         
                         EnvironmentVariables.ShowLastPrintedMessage = false;
@@ -505,44 +508,17 @@ static void Main(string[] args)
             
             string messageBody = callbackQuery.Data;
             var chatId = callbackQuery.Message.Chat.Id;
-
-            await _navigationService.NavigateTo(messageBody, chatId, callbackQueryEventArgs.CallbackQuery.From.Id, _telegramBot);
+            try
+            {
+                await _navigationService.NavigateTo(messageBody, chatId, callbackQueryEventArgs.CallbackQuery.From.Id, _telegramBot);
+            }
+            catch
+            {
+                Console.WriteLine("Navigation error");
+            }
         }
 
-        private static async void BotOnInlineQueryReceived(object sender, InlineQueryEventArgs inlineQueryEventArgs)
-        {
-            Console.WriteLine($"Received inline query from: {inlineQueryEventArgs.InlineQuery.From.Id}");
-
-            InlineQueryResultBase[] results = {
-                new InlineQueryResultLocation(
-                    id: "1",
-                    latitude: 40.7058316f,
-                    longitude: -74.2581888f,
-                    title: "New York")   // displayed result
-                    {
-                        InputMessageContent = new InputLocationMessageContent(
-                            latitude: 40.7058316f,
-                            longitude: -74.2581888f)    // message if result is selected
-                    },
-
-                new InlineQueryResultLocation(
-                    id: "2",
-                    latitude: 13.1449577f,
-                    longitude: 52.507629f,
-                    title: "Berlin") // displayed result
-                    {
-                        InputMessageContent = new InputLocationMessageContent(
-                            latitude: 13.1449577f,
-                            longitude: 52.507629f)   // message if result is selected
-                    }
-            };
-
-            await _telegramBot.AnswerInlineQueryAsync(
-                inlineQueryEventArgs.InlineQuery.Id,
-                results,
-                isPersonal: true,
-                cacheTime: 0);
-        }
+        
 
         private static void BotOnChosenInlineResultReceived(object sender, ChosenInlineResultEventArgs chosenInlineResultEventArgs)
         {

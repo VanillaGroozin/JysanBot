@@ -13,7 +13,7 @@ namespace JysanBot
     {
         public const string LocationIQToken = "499a0e19d26fb9";
         public const string BotToken =
-            "938339701:AAEwiQPszzLIIuYek_2-HSFnM-82lFKfN8w";
+            "938339701:AAFdxp21givmQeLuKL5R2AGC0dBnOhHSThA";
         public const string DatabaseUrl =
             "JysanBot.db";
         public static string LastPrintedMessage = string.Empty;
